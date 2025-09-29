@@ -15,9 +15,6 @@ class Plugin {
     }
 
     public function setup(){
-        // i18n
-        load_plugin_textdomain('reedcrm', false, dirname(plugin_basename(__FILE__), 2) . '/languages');
-
         require_once __DIR__ . '/class-admin.php';
         require_once __DIR__ . '/class-api-client.php';
         require_once __DIR__ . '/class-integrator.php';

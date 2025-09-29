@@ -96,7 +96,6 @@ class Integrator {
                     if ( ! $result ) {
                         $error_count++;
                         $errors[] = "Entrée ID $entry_id : Erreur lors de la mise à jour du projet dans Dolibarr.";
-                        error_log( "Error updating project in Dolibarr for entry ID $entry_id" );
                     }
 
                     continue;
@@ -126,7 +125,6 @@ class Integrator {
                 if ( ! $result ) {
                     $error_count++;
                     $errors[] = "Entrée ID $entry_id : Erreur lors de l'envoi vers Dolibarr.";
-                    error_log( "Error sending project to Dolibarr for entry ID $entry_id" );
                 } else {
                     $success_count++;
                     gform_update_meta( $entry_id, 'easycrm_project_id', $result->project_id );
