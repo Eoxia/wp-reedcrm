@@ -73,7 +73,7 @@ class Integrator {
                         $fields[ $input['id'] ] = $input['label'];
                     }
                 } else {
-                    $fields[ $field->id ] = $field->label;
+                    $fields[ $field->id ] = !empty($field->adminLabel) ? $field->adminLabel : $field->label;
                 }
             }
 
