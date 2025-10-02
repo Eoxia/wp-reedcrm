@@ -54,7 +54,7 @@ class API_Client {
 	 * @return array|boolean     Retournes les données de la requête ou false.
 	 */
 	public static function put( $end_point, $data ) {
-		return Request_Util::post( $end_point, $data, 'PUT' );
+		return API_Client::post( $end_point, $data, 'PUT' );
 	}
 
 	/**
