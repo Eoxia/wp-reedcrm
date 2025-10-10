@@ -3,6 +3,8 @@ namespace ReedCRM;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+include_once __DIR__ . '/class-cron.php';
+
 class Admin {
     public static function init(){
         add_action('admin_menu', [__CLASS__, 'admin_menu']);
@@ -15,7 +17,7 @@ class Admin {
         if ( strpos($hook, 'settings') === false ) return;
         wp_enqueue_style('reedcrm-admin', plugins_url('../assets/css/admin.css', __FILE__), array(), defined('WP_REEDCRM_VERSION') ? WP_REEDCRM_VERSION : '1.0.0');
         wp_enqueue_script('reedcrm-admin', plugins_url('../assets/js/admin.js', __FILE__), array('jquery'), defined('WP_REEDCRM_VERSION') ? WP_REEDCRM_VERSION : '1.0.0', true);
-        
+
         wp_localize_script('reedcrm-admin', 'reedcrm_ajax', [
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('reedcrm_test_connection_nonce'),
@@ -48,13 +50,31 @@ class Admin {
             'sanitize_callback' => 'esc_url_raw',
             'default' => ''
         ]);
+        register_setting('reedcrm_settings_group', 'reedcrm_cron_enabled', [
+            'type' => 'boolean',
+            'sanitize_callback' => [__CLASS__, 'sanitize_checkbox'],
+            'default' => false
+        ]);
+        register_setting('reedcrm_settings_group', 'reedcrm_cron_interval', [
+            'type' => 'string',
+            'sanitize_callback' => [__CLASS__, 'sanitize_cron_interval'],
+            'default' => 'hourly'
+        ]);
+
+        // Hook to update cron when settings are saved
+        add_action('update_option_reedcrm_cron_enabled', [__CLASS__, 'update_cron_schedule']);
+        add_action('update_option_reedcrm_cron_interval', [__CLASS__, 'update_cron_schedule']);
 
         add_settings_section('reedcrm_main', esc_html__('Configuration API','reedcrm'), function(){ echo '<p>' . esc_html__('Entrez la clé API et l\'URL.','reedcrm') . '</p>'; }, 'reedcrm-settings');
 
         add_settings_field('reedcrm_api_key', esc_html__('API Key','reedcrm'), [__CLASS__, 'field_api_key'], 'reedcrm-settings', 'reedcrm_main');
         add_settings_field('reedcrm_api_url', esc_html__('API URL','reedcrm'), [__CLASS__, 'field_api_url'], 'reedcrm-settings', 'reedcrm_main');
-    }
 
+        add_settings_section('reedcrm_cron', esc_html__('Configuration Cron','reedcrm'), function(){ echo '<p>' . esc_html__('Configurez la synchronisation automatique.','reedcrm') . '</p>'; }, 'reedcrm-settings');
+
+        add_settings_field('reedcrm_cron_enabled', esc_html__('Activer le Cron','reedcrm'), [__CLASS__, 'field_cron_enabled'], 'reedcrm-settings', 'reedcrm_cron');
+        add_settings_field('reedcrm_cron_interval', esc_html__('Intervalle de synchronisation','reedcrm'), [__CLASS__, 'field_cron_interval'], 'reedcrm-settings', 'reedcrm_cron');
+    }
 
     public static function field_api_key(){
         $val = get_option('reedcrm_api_key', '');
@@ -64,6 +84,42 @@ class Admin {
     public static function field_api_url(){
         $val = get_option('reedcrm_api_url', '');
         printf('<input type="url" name="reedcrm_api_url" value="%s" class="regular-text" placeholder="https://api.exemple.com" />', esc_url($val));
+    }
+
+    public static function field_cron_enabled(){
+        $val = get_option('reedcrm_cron_enabled', false);
+        printf('<input type="checkbox" name="reedcrm_cron_enabled" value="1" %s />', checked($val, true, false));
+        echo '<p class="description">' . esc_html__('Cochez pour activer la synchronisation automatique', 'reedcrm') . '</p>';
+    }
+
+    public static function field_cron_interval(){
+        $val = get_option('reedcrm_cron_interval', 'hourly');
+        $intervals = [
+            'hourly' => esc_html__('Toutes les heures', 'reedcrm'),
+            'twicedaily' => esc_html__('Deux fois par jour', 'reedcrm'),
+            'daily' => esc_html__('Une fois par jour', 'reedcrm'),
+            'weekly' => esc_html__('Une fois par semaine', 'reedcrm')
+        ];
+        
+        echo '<select name="reedcrm_cron_interval">';
+        foreach ($intervals as $key => $label) {
+            printf('<option value="%s" %s>%s</option>', 
+                esc_attr($key), 
+                selected($val, $key, false), 
+                esc_html($label)
+            );
+        }
+        echo '</select>';
+        echo '<p class="description">' . esc_html__('Choisissez la fréquence de synchronisation', 'reedcrm') . '</p>';
+    }
+
+    public static function sanitize_checkbox($input){
+        return !empty($input) ? true : false;
+    }
+
+    public static function sanitize_cron_interval($input){
+        $valid_intervals = ['every_5_minutes', 'every_15_minutes', 'every_30_minutes', 'hourly', 'twicedaily', 'daily', 'weekly'];
+        return in_array($input, $valid_intervals) ? $input : 'hourly';
     }
 
     public static function ajax_test_connection(){
@@ -162,5 +218,10 @@ class Admin {
             </form>
         </div>
         <?php
+    }
+
+    public static function update_cron_schedule() {
+        \ReedCRM\Cron::unschedule_cron();
+        \ReedCRM\Cron::schedule_cron();
     }
 }
