@@ -97,7 +97,6 @@ class Integrator {
                         $error_count++;
                         $errors[] = "Entrée ID $entry_id : Erreur lors de la mise à jour du projet dans Dolibarr.";
                     }
-
                     continue;
                 }
 
@@ -111,7 +110,7 @@ class Integrator {
                 }
 
                 $result = API_Client::post(
-                    'easycrm/createProject',
+                    'reedcrm/createProject',
                     [
                         'title'      => $projects[ $entry_id ]['Société'] ?? '',
                         'lastname'   => $projects[ $entry_id ]['Nom'] ?? '',

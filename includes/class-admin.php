@@ -90,7 +90,7 @@ class Admin {
     }
 
     private static function test_dolibarr_connection($api_url, $api_key){
-        $url = rtrim($api_url, '/') . '/api/index.php/easycrm/testRights';
+        $url = rtrim($api_url, '/') . '/api/index.php/reedcrm/testRights';
 
         $response = wp_remote_post($url, [
             'timeout' => 15,
