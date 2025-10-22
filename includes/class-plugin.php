@@ -14,14 +14,17 @@ class Plugin {
         return self::$instance;
     }
 
-    public function setup(){
+    public function setup() {
         require_once __DIR__ . '/class-admin.php';
         require_once __DIR__ . '/class-api-client.php';
         require_once __DIR__ . '/class-integrator.php';
+        require_once __DIR__ . '/class-cron.php';
 
         Admin::init();
         API_Client::init();
         Integrator::init_hooks();
+        Cron::init();
+
         register_activation_hook( dirname(__DIR__) . '/reedcrm.php', [ $this, 'activate' ] );
         register_deactivation_hook( dirname(__DIR__) . '/reedcrm.php', [ $this, 'deactivate' ] );
     }

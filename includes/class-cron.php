@@ -20,6 +20,7 @@ class Cron {
     }
 
     public static function add_custom_intervals($schedules){
+
         $schedules['every_5_minutes'] = [
             'interval' => 5 * MINUTE_IN_SECONDS,
             'display' => esc_html__('Toutes les 5 minutes', 'reedcrm')
@@ -109,22 +110,76 @@ class Cron {
 
         // list all Gravityforms forms
         if (class_exists('GFAPI')) {
-            $forms = GFAPI::get_forms(); // Récupère tous les formulaires
+            $forms = \GFAPI::get_forms(); // Récupère tous les formulaires
             foreach ($forms as $form) {
                 if (!isset($form['easycrm_auto_send']) || $form['easycrm_auto_send'] !== '1') {
                     continue; // Ignorer les formulaires non marqués pour la synchronisation
                 }
 
-                // Récupérer les entrées non synchronisées pour ce formulaire
+                $fields = [];
+
+                foreach ( $form['fields'] as $field ) {
+                    if ( ! empty( $field->inputs ) ) {
+                        foreach ( $field->inputs as $input ) {
+                            $fields[ $input['id'] ] = $input['label'];
+                        }
+                    } else {
+                        $fields[ $field->id ] = !empty($field->adminLabel) ? $field->adminLabel : $field->label;
+                    }
+                }
+
                 $entries = \GFAPI::get_entries($form['id']);
 
-                foreach ($entries as $entry) {
-                    $entry_id = $entry['id'];
-                    if ( ! empty( gform_get_meta( $entry['id'], 'easycrm_project_id' ) ) ) {
-                        continue; // Déjà synchronisé
+                $projects       = [];
+                $success_count  = 0;
+                $error_count    = 0;
+                $errors         = [];
+
+                foreach ( $entries as $entry ) {
+                    $projectId = gform_get_meta( $entry['id'], 'easycrm_project_id' );
+
+                    if ( ! empty( $projectId ) ) {
+                        // Update projet existant
+                        $result = API_Client::put(
+                            'projects/' . $projectId,
+                            [ 'date_start' => strtotime( $entry['date_created'] ) ]
+                        );
+
+                        if ( ! $result ) {
+                            $error_count++;
+                            $errors[] = "Entrée ID {$entry['id']} : Erreur lors de la mise à jour du projet dans Dolibarr.";
+                        }
+                        continue;
                     }
 
-                    // Préparer les données à envoyer
+                    // Nouveau projet
+                    $projects[ $entry['id'] ] = [];
+
+                    foreach ( $fields as $field_id => $field_label ) {
+                        if ( isset( $entry[ $field_id ] ) ) {
+                            $projects[ $entry['id'] ][ $field_label ] = $entry[ $field_id ];
+                        }
+                    }
+
+                    $result = API_Client::post(
+                        'reedcrm/createProject',
+                        [
+                            'title'      => $projects[ $entry['id'] ]['Société'] ?? '',
+                            'lastname'   => $projects[ $entry['id'] ]['Nom'] ?? '',
+                            'firstname'  => $projects[ $entry['id'] ]['Prénom'] ?? '',
+                            'email'      => $projects[ $entry['id'] ]['E-mail'] ?? '',
+                            'phone'      => $projects[ $entry['id'] ]['Téléphone'] ?? '',
+                            'date_start' => strtotime( $entry['date_created'] ),
+                        ]
+                    );
+
+                    if ( ! $result ) {
+                        $error_count++;
+                        $errors[] = "Entrée ID {$entry['id']} : Erreur lors de l'envoi vers Dolibarr.";
+                    } else {
+                        $success_count++;
+                        gform_update_meta( $entry['id'], 'easycrm_project_id', $result->project_id );
+                    }
                 }
             }
         }

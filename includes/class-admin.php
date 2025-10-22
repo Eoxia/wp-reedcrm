@@ -95,10 +95,13 @@ class Admin {
     public static function field_cron_interval(){
         $val = get_option('reedcrm_cron_interval', 'hourly');
         $intervals = [
+            'every_5_minutes' => esc_html__('Toutes les 5 minutes', 'reedcrm'),
+            'every_15_minutes' => esc_html__('Toutes les 15 minutes', 'reedcrm'),
+            'every_30_minutes' => esc_html__('Toutes les 30 minutes', 'reedcrm'),
             'hourly' => esc_html__('Toutes les heures', 'reedcrm'),
             'twicedaily' => esc_html__('Deux fois par jour', 'reedcrm'),
             'daily' => esc_html__('Une fois par jour', 'reedcrm'),
-            'weekly' => esc_html__('Une fois par semaine', 'reedcrm')
+            'weekly' => esc_html__('Une fois par semaine', 'reedcrm'),
         ];
         
         echo '<select name="reedcrm_cron_interval">';
@@ -116,7 +119,6 @@ class Admin {
     public static function sanitize_checkbox($input){
         return !empty($input) ? true : false;
     }
-
     public static function sanitize_cron_interval($input){
         $valid_intervals = ['every_5_minutes', 'every_15_minutes', 'every_30_minutes', 'hourly', 'twicedaily', 'daily', 'weekly'];
         return in_array($input, $valid_intervals) ? $input : 'hourly';
