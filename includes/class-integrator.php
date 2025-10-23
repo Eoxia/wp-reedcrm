@@ -84,6 +84,16 @@ class Integrator {
 
             foreach ( $entries as $entry_id ) {
                 $entry     = \GFAPI::get_entry( $entry_id );
+
+                $notes       = \GFAPI::get_notes( array( 'entry_id' => $entry_id ) );
+                $description = '';
+                foreach ( $notes as $note ) {
+                    if (empty($note->user_id)) {
+                        continue;
+                    }
+                    $description .= $note->user_name . ' (' . $note->date_created . "): " . $note->value . "<br>";
+                }
+
                 $projectId = gform_get_meta( $entry_id, 'easycrm_project_id' );
 
                 if ( ! empty( $projectId ) ) {
@@ -118,6 +128,7 @@ class Integrator {
                         'email'      => $projects[ $entry_id ]['E-mail'] ?? '',
                         'phone'      => $projects[ $entry_id ]['Téléphone'] ?? '',
                         'date_start' => strtotime( $entry['date_created'] ),
+                        'description'=> $description,
                     ]
                 );
 
