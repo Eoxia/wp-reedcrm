@@ -22,6 +22,9 @@ class Integrator {
         add_filter( 'gform_entries_column_filter', [ __CLASS__, 'populate_easycrm_column' ], 10, 4 );
         add_filter( 'gform_entry_list_bulk_actions', [ __CLASS__, 'add_bulk_action' ], 10, 2 );
         add_action( 'gform_entry_list_action', [ __CLASS__, 'handle_bulk_action' ], 10, 3 );
+        
+        // Add form settings using modern API
+        add_filter( 'gform_form_settings_fields', [ __CLASS__, 'add_form_settings_fields' ], 10, 2 );
     }
 
     /**
@@ -97,6 +100,7 @@ class Integrator {
                         $error_count++;
                         $errors[] = "Entrée ID $entry_id : Erreur lors de la mise à jour du projet dans Dolibarr.";
                     }
+                
                     continue;
                 }
 
@@ -143,5 +147,41 @@ class Integrator {
             wp_redirect( $redirect_url );
             exit;
         }
+    }
+
+    /**
+     * Add form settings for EasyCRM auto-sending using modern API
+     */
+    public static function add_form_settings_fields( $fields, $form ) {
+        $fields['reedcrm_settings'] = [
+            'title'       => esc_html__( 'Paramètres ReedCRM', 'reedcrm' ),
+            'description' => '',
+            'fields'      => [
+                [
+                    'name'          => 'reedcrm_auto_send',
+                    'type'          => 'checkbox',
+                    'label'         => esc_html__( 'Envoi automatique vers Dolibarr', 'reedcrm' ),
+                    'description'   => esc_html__( 'Activer l\'envoi automatique des entrées vers Dolibarr via cron', 'reedcrm' ),
+                    'choices'       => [
+                        [
+                            'name'  => 'easycrm_auto_send',
+                            'label' => esc_html__( 'Activer l\'envoi automatique', 'reedcrm' ),
+                            'value' => '1'
+                        ]
+                    ],
+                    'default_value' => '0'
+                ]
+            ]
+        ];
+
+        return $fields;
+    }
+
+    /**
+     * Check if auto-send is enabled for a form
+     */
+    public static function is_auto_send_enabled( $form_id ) {
+        $form = \GFAPI::get_form( $form_id );
+        return isset( $form['reedcrm_auto_send'] ) && $form['reedcrm_auto_send'] === '1';
     }
 }
