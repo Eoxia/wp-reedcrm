@@ -189,16 +189,16 @@ class Cron {
             'message' => $data['message'] ?? 'Synchronisation terminée'
         ];
     }
-    
+
     public static function get_next_scheduled(){
         $timestamp = wp_next_scheduled(self::HOOK_NAME);
         return $timestamp ? $timestamp : false;
     }
-    
+
     public static function is_scheduled(){
         return wp_next_scheduled(self::HOOK_NAME) !== false;
     }
-    
+
     public static function force_sync(){
         return self::execute_sync();
     }
