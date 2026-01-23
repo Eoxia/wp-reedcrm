@@ -34,7 +34,7 @@ class Admin {
             'manage_options',                // Capability
             'reedcrm-settings',              // Slug
             [__CLASS__, 'settings_page'],    // Callback
-            'dashicons-database',            // Icône du menu (exemple)
+            plugin_dir_url( dirname(__FILE__) ) . 'assets/img/icon.svg',            // Icône du menu (exemple)
             25                               // Position dans le menu
         );
     }
