@@ -67,8 +67,8 @@ class Admin {
 
         add_settings_section('reedcrm_main', esc_html__('Configuration API','reedcrm'), function(){ echo '<p>' . esc_html__('Entrez la clé API et l\'URL.','reedcrm') . '</p>'; }, 'reedcrm-settings');
 
-        add_settings_field('reedcrm_api_key', esc_html__('API Key','reedcrm'), [__CLASS__, 'field_api_key'], 'reedcrm-settings', 'reedcrm_main');
         add_settings_field('reedcrm_api_url', esc_html__('API URL','reedcrm'), [__CLASS__, 'field_api_url'], 'reedcrm-settings', 'reedcrm_main');
+        add_settings_field('reedcrm_api_key', esc_html__('API Key','reedcrm'), [__CLASS__, 'field_api_key'], 'reedcrm-settings', 'reedcrm_main');
 
         add_settings_section('reedcrm_cron', esc_html__('Configuration Cron','reedcrm'), function(){ echo '<p>' . esc_html__('Configurez la synchronisation automatique.','reedcrm') . '</p>'; }, 'reedcrm-settings');
 
@@ -78,7 +78,7 @@ class Admin {
 
     public static function field_api_key(){
         $val = get_option('reedcrm_api_key', '');
-        printf('<input type="text" name="reedcrm_api_key" value="%s" class="regular-text" />', esc_attr($val));
+        printf('<input type="password" name="reedcrm_api_key" value="%s" class="regular-text" />', esc_attr($val));
     }
 
     public static function field_api_url(){
