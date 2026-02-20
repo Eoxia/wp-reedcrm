@@ -138,8 +138,7 @@ class Integrator {
                         'email'      => $projects[ $entry_id ]['email'] ?? $projects[ $entry_id ]['E-mail'] ?? '',
                         'phone'      => $projects[ $entry_id ]['phone'] ?? $projects[ $entry_id ]['Téléphone'] ?? '',
                         'date_start' => strtotime( $entry['date_created'] ),
-                        'description'=> $projects[ $entry_id ]['Commentaires'] ?? '',
-                        'categories' => !empty($form['reedcrm_categorie']) && $form['reedcrm_categorie'] != 1 ? $form['reedcrm_categorie'] : ''
+                        'description'=> $projects[ $entry_id ]['description'] ?? $projects[ $entry_id ]['Commentaires'] ?? '',
                     ]
                 );
 
