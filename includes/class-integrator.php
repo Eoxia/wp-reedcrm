@@ -129,16 +129,26 @@ class Integrator {
                     }
                 }
 
+                $url  = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
+                        . '://' . $_SERVER['HTTP_HOST']
+                        . strtok($_SERVER['REQUEST_URI'], '?');
+                $query = [];
+                parse_str($_SERVER['QUERY_STRING'], $query);
+                $query['lid']  = $entry_id;
+                $query['view'] = 'entry';
+
+
                 $result = API_Client::post(
                     'reedcrm/createProject',
                     [
-                        'title'      => $projects[ $entry_id ]['title'] ?? $projects[ $entry_id ]['Société'] ?? '',
-                        'lastname'   => $projects[ $entry_id ]['lastname'] ?? $projects[ $entry_id ]['Nom'] ?? '',
-                        'firstname'  => $projects[ $entry_id ]['firstname'] ?? $projects[ $entry_id ]['Prénom'] ?? '',
-                        'email'      => $projects[ $entry_id ]['email'] ?? $projects[ $entry_id ]['E-mail'] ?? '',
-                        'phone'      => $projects[ $entry_id ]['phone'] ?? $projects[ $entry_id ]['Téléphone'] ?? '',
-                        'date_start' => strtotime( $entry['date_created'] ),
-                        'description'=> $projects[ $entry_id ]['description'] ?? $projects[ $entry_id ]['Commentaires'] ?? '',
+                        'title'           => $projects[ $entry_id ]['title'] ?? $projects[ $entry_id ]['Société'] ?? '',
+                        'lastname'        => $projects[ $entry_id ]['lastname'] ?? $projects[ $entry_id ]['Nom'] ?? '',
+                        'firstname'       => $projects[ $entry_id ]['firstname'] ?? $projects[ $entry_id ]['Prénom'] ?? '',
+                        'email'           => $projects[ $entry_id ]['email'] ?? $projects[ $entry_id ]['E-mail'] ?? '',
+                        'phone'           => $projects[ $entry_id ]['phone'] ?? $projects[ $entry_id ]['Téléphone'] ?? '',
+                        'date_start'      => strtotime( $entry['date_created'] ),
+                        'description'     => $projects[ $entry_id ]['description'] ?? $projects[ $entry_id ]['Commentaires'] ?? '',
+                        'gravityform_url' => $url . '?' . http_build_query($query)
                     ]
                 );
 
