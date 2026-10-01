@@ -36,8 +36,21 @@ class API_Client {
 		) );
 
 		if ( ! is_wp_error( $request ) ) {
-			return json_decode( $request['body'] );
+			$code = wp_remote_retrieve_response_code( $request );
+			$body = json_decode( wp_remote_retrieve_body( $request ) );
+
+			// Dolibarr answers its errors with a JSON body too. Returned as is, that body is truthy and the
+			// callers read it as a success: a refused call would be logged as an import and the entry would keep
+			// an empty project id.
+			if ( $code < 200 || $code >= 300 ) {
+				set_transient( 'wps_request_error', $body->error->message ?? sprintf( 'HTTP %d', $code ), 60 );
+				return false;
+			}
+
+			return $body;
 		}
+
+		set_transient( 'wps_request_error', $request->get_error_message(), 60 );
 
 		return false;
 	}
