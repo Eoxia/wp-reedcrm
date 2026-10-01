@@ -182,21 +182,28 @@ class Integrator {
      */
     public static function add_form_settings_fields( $fields, $form ) {
 
-        $res = API_Client::get('categories');
-        $project_type_id = current($res)->MAP_ID->project;
-        $filtered = array_filter($res, fn($cat) => $cat->type == $project_type_id);
+        // Dolibarr resolves the "project" type itself, so the filter travels with the request: its answer drops
+        // the MAP_ID map the type id used to be read from. A missing key, an unreachable instance or a user
+        // without the right to read the categories all give nothing back, and the settings page still has to open.
+        $res        = API_Client::get( 'categories?type=project&limit=0' );
+        $categories = [];
 
-        $categories = array_map(function ($item) {
-            return [
-                'label' => $item->label,
-                'value' => $item->id,
-            ];
-        }, $filtered);
-        $categories[] = ['label' => __('Selectionnez une catégorie'), 'value' => -1];
+        if ( is_array( $res ) ) {
+            foreach ( $res as $category ) {
+                if ( isset( $category->id, $category->label ) ) {
+                    $categories[] = [
+                        'label' => $category->label,
+                        'value' => $category->id,
+                    ];
+                }
+            }
+        }
+
+        $categories[] = [ 'label' => esc_html__( 'Sélectionnez une catégorie', 'reedcrm' ), 'value' => -1 ];
 
         $fields['reedcrm_settings'] = [
             'title'       => esc_html__( 'Paramètres ReedCRM', 'reedcrm' ),
-            'description' => '',
+            'description' => count( $categories ) > 1 ? '' : esc_html__( 'Aucune catégorie de projet n\'a pu être lue dans Dolibarr : vérifiez l\'URL, la clé API et les droits de l\'utilisateur API dans les réglages ReedCRM.', 'reedcrm' ),
             'fields'      => [
                 [
                     'name'          => 'reedcrm_auto_send',
